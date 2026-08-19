@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.auth.router import router as auth_router
 from app.blog.router import router as blog_router
 from app.jobs.router import router as jobs_router
+from app.contact.router import router as contact_router
 
 
 app = FastAPI()
@@ -26,3 +27,4 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(blog_router)
 app.include_router(jobs_router)
+app.include_router(contact_router)
