@@ -20,7 +20,7 @@ class BlogResponse(BaseModel):
     title: str
     content: str
     published: bool
-    author_id: int
+    admin_id: int
     created_at: datetime
     updated_at: datetime
 

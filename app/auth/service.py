@@ -3,7 +3,7 @@ import bcrypt
 from jose import jwt
 from sqlalchemy.orm import Session
 
-from app.models import User
+from app.models import User, Admin
 from app.database import settings
 from datetime import datetime, timedelta, timezone
 
@@ -47,6 +47,15 @@ def get_user_by_username(
     ).first()
 
 
+def get_admin_by_email(
+    db: Session,
+    email: str
+):
+    return db.query(Admin).filter(
+        Admin.email == email
+    ).first()
+
+
 def create_user(
     db: Session,
     username: str,
@@ -69,10 +78,15 @@ def create_user(
 
 
 def create_access_token(user: User):
+    expire = datetime.now(timezone.utc) + timedelta(
+        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+    )
+
     payload = {
         "sub": str(user.id),
         "email": user.email,
-        "is_admin": user.is_admin
+        "is_admin": user.is_admin,
+        "exp": expire
     }
 
     token = jwt.encode(
@@ -83,15 +97,16 @@ def create_access_token(user: User):
 
     return token
 
-def create_access_token(user: User):
+
+def create_admin_access_token(admin: Admin):
     expire = datetime.now(timezone.utc) + timedelta(
         minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
     )
 
     payload = {
-        "sub": str(user.id),
-        "email": user.email,
-        "is_admin": user.is_admin,
+        "sub": str(admin.id),
+        "email": admin.email,
+        "is_admin": True,
         "exp": expire
     }
 

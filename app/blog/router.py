@@ -2,8 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import User
-from app.auth.dependencies import get_current_user
+from app.models import User, Admin
+
+from app.auth.dependencies import (
+    get_current_user,
+    get_current_user_or_admin
+)
 
 from app.blog.schemas import (
     BlogCreate,
@@ -26,6 +30,11 @@ router = APIRouter(
 )
 
 
+# ==========================================
+# CREATE BLOG
+# Logged-in users can create blogs
+# ==========================================
+
 @router.post(
     "",
     response_model=BlogResponse,
@@ -43,6 +52,11 @@ def create_blog_post(
     )
 
 
+# ==========================================
+# GET ALL BLOGS
+# Public
+# ==========================================
+
 @router.get(
     "",
     response_model=list[BlogResponse]
@@ -52,6 +66,11 @@ def get_blogs(
 ):
     return get_all_blogs(db)
 
+
+# ==========================================
+# GET ONE BLOG
+# Public
+# ==========================================
 
 @router.get(
     "/{blog_id}",
@@ -75,6 +94,11 @@ def get_blog(
     return blog
 
 
+# ==========================================
+# UPDATE BLOG
+# Owner OR Admin
+# ==========================================
+
 @router.put(
     "/{blog_id}",
     response_model=BlogResponse
@@ -83,7 +107,7 @@ def update_blog_post(
     blog_id: int,
     blog_data: BlogUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user_or_admin=Depends(get_current_user_or_admin)
 ):
     blog = get_blog_by_id(
         db,
@@ -96,7 +120,16 @@ def update_blog_post(
             detail="Blog not found"
         )
 
-    if blog.author_id != current_user.id:
+    # ADMIN
+    if isinstance(current_user_or_admin, Admin):
+        return update_blog(
+            db,
+            blog,
+            blog_data
+        )
+
+    # NORMAL USER
+    if blog.author_id != current_user_or_admin.id:
         raise HTTPException(
             status_code=403,
             detail="You can only update your own blog"
@@ -109,6 +142,11 @@ def update_blog_post(
     )
 
 
+# ==========================================
+# DELETE BLOG
+# Owner OR Admin
+# ==========================================
+
 @router.delete(
     "/{blog_id}",
     status_code=status.HTTP_204_NO_CONTENT
@@ -116,7 +154,7 @@ def update_blog_post(
 def delete_blog_post(
     blog_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user_or_admin=Depends(get_current_user_or_admin)
 ):
     blog = get_blog_by_id(
         db,
@@ -129,12 +167,24 @@ def delete_blog_post(
             detail="Blog not found"
         )
 
-    if blog.author_id != current_user.id:
+    # ADMIN
+    if isinstance(current_user_or_admin, Admin):
+        delete_blog(
+            db,
+            blog
+        )
+        return None
+
+    # NORMAL USER
+    if blog.author_id != current_user_or_admin.id:
         raise HTTPException(
             status_code=403,
             detail="You can only delete your own blog"
         )
 
-    delete_blog(db, blog)
+    delete_blog(
+        db,
+        blog
+    )
 
     return None

@@ -2,9 +2,8 @@ from datetime import datetime
 
 from sqlalchemy import String, Text, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
+from sqlalchemy import Column, Integer
 from app.database import Base
-
 
 class User(Base):
     __tablename__ = "users"
@@ -172,3 +171,11 @@ class Contact(Base):
         default=datetime.utcnow,
         nullable=False
     )
+
+
+class Admin(Base):
+    __tablename__ = "admins"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
