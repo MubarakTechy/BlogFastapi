@@ -13,17 +13,17 @@ class BlogUpdate(BaseModel):
     title: str | None = None
     content: str | None = None
     published: bool | None = None
+    image_url: str | None = None
 
 
 class BlogResponse(BaseModel):
     id: int
     title: str
     content: str
+    image_url: str | None
     published: bool
-    admin_id: int
+    author_id: int
     created_at: datetime
     updated_at: datetime
 
-    model_config = ConfigDict(
-        from_attributes=True
-    )
+    model_config = ConfigDict(from_attributes=True)

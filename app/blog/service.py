@@ -3,15 +3,20 @@ from sqlalchemy.orm import Session
 from app.models import Blog
 from app.blog.schemas import BlogCreate, BlogUpdate
 
+from sqlalchemy.orm import Session
+
+
 
 def create_blog(
     db: Session,
     blog_data: BlogCreate,
-    author_id: int
+    author_id: int,
+    image_url: str | None = None
 ):
     blog = Blog(
         title=blog_data.title,
         content=blog_data.content,
+        image_url=image_url,
         published=blog_data.published,
         author_id=author_id
     )

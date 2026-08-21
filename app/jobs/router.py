@@ -87,7 +87,7 @@ def update_existing_job(
             detail="Job not found"
         )
 
-    if job.author_id != current_user.id:
+    if not current_user.is_admin and job.author_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not allowed to edit this job"
@@ -117,7 +117,7 @@ def delete_existing_job(
             detail="Job not found"
         )
 
-    if job.author_id != current_user.id:
+    if not current_user.is_admin and job.author_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not allowed to delete this job"
