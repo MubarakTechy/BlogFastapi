@@ -3,14 +3,10 @@ from sqlalchemy.orm import Session
 from app.models import Blog
 from app.blog.schemas import BlogCreate, BlogUpdate
 
-from sqlalchemy.orm import Session
-
-
-
 def create_blog(
     db: Session,
     blog_data: BlogCreate,
-    author_id: int,
+    admin_id: int,
     image_url: str | None = None
 ):
     blog = Blog(
@@ -18,7 +14,7 @@ def create_blog(
         content=blog_data.content,
         image_url=image_url,
         published=blog_data.published,
-        author_id=author_id
+        admin_id=admin_id
     )
 
     db.add(blog)
@@ -26,7 +22,6 @@ def create_blog(
     db.refresh(blog)
 
     return blog
-
 
 def get_all_blogs(db: Session):
     return db.query(Blog).order_by(

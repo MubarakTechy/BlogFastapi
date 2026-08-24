@@ -41,9 +41,9 @@ class User(Base):
         default=datetime.utcnow
     )
 
-    blogs: Mapped[list["Blog"]] = relationship(
-        back_populates="author"
-    )
+    # blogs: Mapped[list["Blog"]] = relationship(
+    #     back_populates="author"
+    # )
 
 
 # class Blog(Base):
@@ -93,52 +93,37 @@ class User(Base):
 #     author: Mapped["User"] = relationship(
 #         back_populates="blogs"
 #     )
-
 class Blog(Base):
     __tablename__ = "blogs"
 
-    id: Mapped[int] = mapped_column(
-        primary_key=True,
-        index=True
-    )
+    id = Column(Integer, primary_key=True)
 
-    title: Mapped[str] = mapped_column(
-        String(200),
+    title = Column(String, nullable=False)
+    content = Column(Text, nullable=False)
+
+    image_url = Column(String, nullable=True)
+
+    published = Column(Boolean, default=True)
+
+    admin_id = Column(
+        Integer,
+        ForeignKey("admins.id"),
         nullable=False
     )
 
-    content: Mapped[str] = mapped_column(
-        Text,
-        nullable=False
-    )
-
-    image_url: Mapped[str | None] = mapped_column(
-        String(500),
-        nullable=True
-    )
-
-    published: Mapped[bool] = mapped_column(
-        Boolean,
-        default=True
-    )
-
-    created_at: Mapped[datetime] = mapped_column(
+    created_at = Column(
         DateTime,
         default=datetime.utcnow
     )
 
-    updated_at: Mapped[datetime] = mapped_column(
+    updated_at = Column(
         DateTime,
         default=datetime.utcnow,
         onupdate=datetime.utcnow
     )
 
-    author_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id"),
-        nullable=False
-    )
-
-    author: Mapped["User"] = relationship(
+    admin = relationship(
+        "Admin",
         back_populates="blogs"
     )
 
@@ -230,3 +215,7 @@ class Admin(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
+    blogs = relationship(
+    "Blog",
+    back_populates="admin"
+)

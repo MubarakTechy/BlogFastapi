@@ -55,7 +55,6 @@ router = APIRouter(
 # CREATE BLOG
 # Logged-in users can create blogs
 # ==========================================
-
 @router.post(
     "",
     response_model=BlogResponse,
@@ -69,13 +68,19 @@ def create_blog_post(
 
     db: Session = Depends(get_db),
 
-    current_user: User = Depends(get_current_user)
+    current_user_or_admin = Depends(get_current_user_or_admin)
 ):
+
+    # Only Admin can create blogs
+    if not isinstance(current_user_or_admin, Admin):
+        raise HTTPException(
+            status_code=403,
+            detail="Only admins can create blog posts"
+        )
 
     image_url = None
 
     if image:
-
         try:
             image_url = upload_image(image.file)
 
@@ -94,10 +99,9 @@ def create_blog_post(
     return create_blog(
         db,
         blog_data,
-        current_user.id,
+        current_user_or_admin.id,
         image_url
-    )
-# ==========================================
+    )# ==========================================
 # GET ALL BLOGS
 # Public
 # ==========================================
@@ -143,7 +147,6 @@ def get_blog(
 # UPDATE BLOG
 # Owner OR Admin
 # ==========================================
-
 @router.put(
     "/{blog_id}",
     response_model=BlogResponse
@@ -152,7 +155,7 @@ def update_blog_post(
     blog_id: int,
     blog_data: BlogUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user_or_admin = Depends(get_current_user_or_admin)
 ):
     blog = get_blog_by_id(
         db,
@@ -165,12 +168,10 @@ def update_blog_post(
             detail="Blog not found"
         )
 
-    # Normal user can only update their own blog
-    # Admin can update any blog
-    if not current_user.is_admin and blog.author_id != current_user.id:
+    if not isinstance(current_user_or_admin, Admin):
         raise HTTPException(
             status_code=403,
-            detail="You can only update your own blog"
+            detail="Only admins can update blog posts"
         )
 
     return update_blog(
@@ -178,6 +179,7 @@ def update_blog_post(
         blog,
         blog_data
     )
+
 
 # ==========================================
 # DELETE BLOG
@@ -190,7 +192,7 @@ def update_blog_post(
 def delete_blog_post(
     blog_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user_or_admin = Depends(get_current_user_or_admin)
 ):
     blog = get_blog_by_id(
         db,
@@ -203,33 +205,10 @@ def delete_blog_post(
             detail="Blog not found"
         )
 
-    # Normal user can only delete their own blog
-    # Admin can delete any blog
-    if not current_user.is_admin and blog.author_id != current_user.id:
+    if not isinstance(current_user_or_admin, Admin):
         raise HTTPException(
             status_code=403,
-            detail="You can only delete your own blog"
-        )
-
-    delete_blog(
-        db,
-        blog
-    )
-
-    return None
-    # ADMIN
-    if isinstance(current_user_or_admin, Admin):
-        delete_blog(
-            db,
-            blog
-        )
-        return None
-
-    # NORMAL USER
-    if blog.author_id != current_user_or_admin.id:
-        raise HTTPException(
-            status_code=403,
-            detail="You can only delete your own blog"
+            detail="Only admins can delete blog posts"
         )
 
     delete_blog(
