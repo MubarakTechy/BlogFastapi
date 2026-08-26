@@ -3,7 +3,13 @@ from datetime import datetime
 from sqlalchemy import String, Text, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import Column, Integer
+
 from app.database import Base
+
+
+# ==========================================
+# USER
+# ==========================================
 
 class User(Base):
     __tablename__ = "users"
@@ -41,92 +47,64 @@ class User(Base):
         default=datetime.utcnow
     )
 
-    # blogs: Mapped[list["Blog"]] = relationship(
-    #     back_populates="author"
-    # )
 
+# ==========================================
+# BLOG
+# ==========================================
 
-# class Blog(Base):
-#     __tablename__ = "blogs"
-
-#     id: Mapped[int] = mapped_column(
-#         primary_key=True,
-#         index=True
-#     )
-
-#     title: Mapped[str] = mapped_column(
-#         String(200),
-#         nullable=False
-#     )
-
-#     content: Mapped[str] = mapped_column(
-#         Text,
-#         nullable=False
-#     )
-
-#     image_url: Mapped[str | None] = mapped_column(
-#         String(500),
-#         nullable=True
-#     )
-
-#     published: Mapped[bool] = mapped_column(
-#         Boolean,
-#         default=True
-#     )
-
-#     created_at: Mapped[datetime] = mapped_column(
-#         DateTime,
-#         default=datetime.utcnow
-#     )
-
-#     updated_at: Mapped[datetime] = mapped_column(
-#         DateTime,
-#         default=datetime.utcnow,
-#         onupdate=datetime.utcnow
-#     )
-
-#     author_id: Mapped[int] = mapped_column(
-#         ForeignKey("users.id"),
-#         nullable=False
-#     )
-
-#     author: Mapped["User"] = relationship(
-#         back_populates="blogs"
-#     )
 class Blog(Base):
     __tablename__ = "blogs"
 
-    id = Column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(
+        primary_key=True,
+        index=True
+    )
 
-    title = Column(String, nullable=False)
-    content = Column(Text, nullable=False)
+    title: Mapped[str] = mapped_column(
+        String(200),
+        nullable=False
+    )
 
-    image_url = Column(String, nullable=True)
+    content: Mapped[str] = mapped_column(
+        Text,
+        nullable=False
+    )
 
-    published = Column(Boolean, default=True)
+    image_url: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True
+    )
 
-    admin_id = Column(
-        Integer,
+    published: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True
+    )
+
+    admin_id: Mapped[int] = mapped_column(
         ForeignKey("admins.id"),
         nullable=False
     )
 
-    created_at = Column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.utcnow
     )
 
-    updated_at = Column(
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.utcnow,
         onupdate=datetime.utcnow
     )
 
-    admin = relationship(
+    admin: Mapped["Admin"] = relationship(
         "Admin",
         back_populates="blogs"
     )
 
+
+# ==========================================
+# JOB
+# ==========================================
 
 class Job(Base):
     __tablename__ = "jobs"
@@ -170,6 +148,11 @@ class Job(Base):
         String(50),
         nullable=False
     )
+    
+    image_url: Mapped[str | None] = mapped_column(
+    String(500),
+    nullable=True
+)
 
     is_active: Mapped[bool] = mapped_column(
         Boolean,
@@ -195,13 +178,34 @@ class Job(Base):
     author: Mapped["User"] = relationship()
 
 
+# ==========================================
+# CONTACT
+# ==========================================
 
 class Contact(Base):
     __tablename__ = "contacts"
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    full_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    email: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
-    message: Mapped[str] = mapped_column(Text, nullable=False)
+
+    id: Mapped[int] = mapped_column(
+        primary_key=True,
+        index=True
+    )
+
+    full_name: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False
+    )
+
+    email: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+        index=True
+    )
+
+    message: Mapped[str] = mapped_column(
+        Text,
+        nullable=False
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.utcnow,
@@ -209,13 +213,31 @@ class Contact(Base):
     )
 
 
+# ==========================================
+# ADMIN
+# ==========================================
+
 class Admin(Base):
     __tablename__ = "admins"
 
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    blogs = relationship(
-    "Blog",
-    back_populates="admin"
-)
+    id: Mapped[int] = mapped_column(
+        primary_key=True,
+        index=True
+    )
+
+    email: Mapped[str] = mapped_column(
+        String,
+        unique=True,
+        index=True,
+        nullable=False
+    )
+
+    hashed_password: Mapped[str] = mapped_column(
+        String,
+        nullable=False
+    )
+
+    blogs: Mapped[list["Blog"]] = relationship(
+        "Blog",
+        back_populates="admin"
+    )

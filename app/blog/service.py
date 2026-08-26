@@ -3,6 +3,11 @@ from sqlalchemy.orm import Session
 from app.models import Blog
 from app.blog.schemas import BlogCreate, BlogUpdate
 
+
+# ==========================================
+# CREATE BLOG
+# ==========================================
+
 def create_blog(
     db: Session,
     blog_data: BlogCreate,
@@ -23,11 +28,20 @@ def create_blog(
 
     return blog
 
+
+# ==========================================
+# GET ALL BLOGS
+# ==========================================
+
 def get_all_blogs(db: Session):
     return db.query(Blog).order_by(
         Blog.created_at.desc()
     ).all()
 
+
+# ==========================================
+# GET ONE BLOG
+# ==========================================
 
 def get_blog_by_id(
     db: Session,
@@ -37,6 +51,10 @@ def get_blog_by_id(
         Blog.id == blog_id
     ).first()
 
+
+# ==========================================
+# UPDATE BLOG
+# ==========================================
 
 def update_blog(
     db: Session,
@@ -55,6 +73,10 @@ def update_blog(
 
     return blog
 
+
+# ==========================================
+# DELETE BLOG
+# ==========================================
 
 def delete_blog(
     db: Session,

@@ -1,16 +1,3 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-
-from app.database import get_db
-from app.models import User, Admin
-
-from app.auth.dependencies import (
-    get_current_user,
-    get_current_user_or_admin
-)
-
-
-
 from fastapi import (
     APIRouter,
     Depends,
@@ -24,196 +11,215 @@ from fastapi import (
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import User
 
 from app.auth.dependencies import get_current_user
 
-from app.blog.schemas import (
-    BlogCreate,
-    BlogUpdate,
-    BlogResponse
+from app.jobs.schemas import (
+    JobCreate,
+    JobUpdate,
+    JobResponse
 )
 
-from app.blog.service import (
-    create_blog,
-    get_all_blogs,
-    get_blog_by_id,
-    update_blog,
-    delete_blog
+from app.jobs.service import (
+    create_job,
+    get_jobs,
+    get_job_by_id,
+    update_job,
+    delete_job
 )
 
 from app.utils.image_upload import upload_image
 
 
 router = APIRouter(
-    prefix="/blogs",
-    tags=["Blogs"]
+    prefix="/jobs",
+    tags=["Jobs"]
 )
 
 
 # ==========================================
-# CREATE BLOG
-# Logged-in users can create blogs
+# CREATE JOB
+# AUTHENTICATED USERS
 # ==========================================
+
 @router.post(
     "",
-    response_model=BlogResponse,
+    response_model=JobResponse,
     status_code=status.HTTP_201_CREATED
 )
-def create_blog_post(
+def create_new_job(
     title: str = Form(...),
-    content: str = Form(...),
-    published: bool = Form(True),
+    company: str = Form(...),
+    location: str = Form(...),
+    description: str = Form(...),
+    requirements: str = Form(...),
+    salary: str | None = Form(None),
+    job_type: str = Form(...),
+    is_active: bool = Form(True),
     image: UploadFile | None = File(None),
 
     db: Session = Depends(get_db),
 
-    current_user_or_admin = Depends(get_current_user_or_admin)
+    current_user=Depends(get_current_user)
 ):
-
-    # Only Admin can create blogs
-    if not isinstance(current_user_or_admin, Admin):
-        raise HTTPException(
-            status_code=403,
-            detail="Only admins can create blog posts"
-        )
 
     image_url = None
 
+    # Upload image if provided
     if image:
+
         try:
-            image_url = upload_image(image.file)
+            image_url = upload_image(
+                image.file
+            )
 
         except Exception:
             raise HTTPException(
                 status_code=400,
-                detail="Invalid image or image upload failed"
+                detail="Image upload failed"
             )
 
-    blog_data = BlogCreate(
+    job_data = JobCreate(
         title=title,
-        content=content,
-        published=published
+        company=company,
+        location=location,
+        description=description,
+        requirements=requirements,
+        salary=salary,
+        job_type=job_type,
+        is_active=is_active
     )
 
-    return create_blog(
-        db,
-        blog_data,
-        current_user_or_admin.id,
-        image_url
-    )# ==========================================
-# GET ALL BLOGS
-# Public
+    return create_job(
+        db=db,
+        job_data=job_data,
+        author_id=current_user.id,
+        image_url=image_url
+    )
+
+
+# ==========================================
+# GET ALL JOBS
+# PUBLIC
 # ==========================================
 
 @router.get(
     "",
-    response_model=list[BlogResponse]
+    response_model=list[JobResponse]
 )
-def get_blogs(
+def get_all_jobs(
     db: Session = Depends(get_db)
 ):
-    return get_all_blogs(db)
+    return get_jobs(db)
 
 
 # ==========================================
-# GET ONE BLOG
-# Public
+# GET ONE JOB
+# PUBLIC
 # ==========================================
 
 @router.get(
-    "/{blog_id}",
-    response_model=BlogResponse
+    "/{job_id}",
+    response_model=JobResponse
 )
-def get_blog(
-    blog_id: int,
+def get_single_job(
+    job_id: int,
     db: Session = Depends(get_db)
 ):
-    blog = get_blog_by_id(
+    job = get_job_by_id(
         db,
-        blog_id
+        job_id
     )
 
-    if not blog:
+    if not job:
         raise HTTPException(
-            status_code=404,
-            detail="Blog not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job not found"
         )
 
-    return blog
+    return job
 
 
 # ==========================================
-# UPDATE BLOG
-# Owner OR Admin
+# UPDATE JOB
+# AUTHENTICATED USERS
 # ==========================================
+
 @router.put(
-    "/{blog_id}",
-    response_model=BlogResponse
+    "/{job_id}",
+    response_model=JobResponse
 )
-def update_blog_post(
-    blog_id: int,
-    blog_data: BlogUpdate,
+def update_existing_job(
+    job_id: int,
+
+    job_data: JobUpdate,
+
     db: Session = Depends(get_db),
-    current_user_or_admin = Depends(get_current_user_or_admin)
+
+    current_user=Depends(get_current_user)
 ):
-    blog = get_blog_by_id(
+
+    job = get_job_by_id(
         db,
-        blog_id
+        job_id
     )
 
-    if not blog:
+    if not job:
         raise HTTPException(
-            status_code=404,
-            detail="Blog not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job not found"
         )
 
-    if not isinstance(current_user_or_admin, Admin):
+    if not current_user.is_admin and job.author_id != current_user.id:
         raise HTTPException(
-            status_code=403,
-            detail="Only admins can update blog posts"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not allowed to edit this job"
         )
 
-    return update_blog(
+    return update_job(
         db,
-        blog,
-        blog_data
+        job,
+        job_data
     )
 
 
 # ==========================================
-# DELETE BLOG
-# Owner OR Admin
+# DELETE JOB
+# AUTHENTICATED USERS
 # ==========================================
+
 @router.delete(
-    "/{blog_id}",
+    "/{job_id}",
     status_code=status.HTTP_204_NO_CONTENT
 )
-def delete_blog_post(
-    blog_id: int,
+def delete_existing_job(
+    job_id: int,
+
     db: Session = Depends(get_db),
-    current_user_or_admin = Depends(get_current_user_or_admin)
+
+    current_user=Depends(get_current_user)
 ):
-    blog = get_blog_by_id(
+
+    job = get_job_by_id(
         db,
-        blog_id
+        job_id
     )
 
-    if not blog:
+    if not job:
         raise HTTPException(
-            status_code=404,
-            detail="Blog not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job not found"
         )
 
-    if not isinstance(current_user_or_admin, Admin):
+    if not current_user.is_admin and job.author_id != current_user.id:
         raise HTTPException(
-            status_code=403,
-            detail="Only admins can delete blog posts"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not allowed to delete this job"
         )
 
-    delete_blog(
+    delete_job(
         db,
-        blog
+        job
     )
 
     return None

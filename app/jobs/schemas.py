@@ -24,7 +24,6 @@ class JobUpdate(BaseModel):
     job_type: str | None = None
     is_active: bool | None = None
 
-
 class JobResponse(BaseModel):
     id: int
     title: str
@@ -34,6 +33,7 @@ class JobResponse(BaseModel):
     requirements: str
     salary: str | None
     job_type: str
+    image_url: str | None
     is_active: bool
     author_id: int
     created_at: datetime

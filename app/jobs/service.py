@@ -2,12 +2,13 @@ from sqlalchemy.orm import Session
 
 from app.models import Job
 from app.jobs.schemas import JobCreate, JobUpdate
-
+from app.utils.image_upload import upload_image
 
 def create_job(
     db: Session,
     job_data: JobCreate,
-    author_id: int
+    author_id: int,
+    image_url: str | None = None
 ):
     job = Job(
         title=job_data.title,
@@ -19,6 +20,7 @@ def create_job(
         job_type=job_data.job_type,
         is_active=job_data.is_active,
         author_id=author_id,
+        image_url=image_url,
     )
 
     db.add(job)
@@ -26,7 +28,6 @@ def create_job(
     db.refresh(job)
 
     return job
-
 
 def get_jobs(db: Session):
     return db.query(Job).all()

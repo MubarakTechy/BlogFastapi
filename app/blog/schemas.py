@@ -16,6 +16,7 @@ class BlogUpdate(BaseModel):
     published: bool | None = None
     image_url: str | None = None
 
+
 class BlogResponse(BaseModel):
     id: int
     title: str
@@ -26,4 +27,6 @@ class BlogResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True
+    )
