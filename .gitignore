@@ -14,3 +14,7 @@ __pycache__/
 .idea/
 
 *.log
+
+# Admin creation scripts
+create_admin.py
+create_admin_user.py
