@@ -12,55 +12,52 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 
-from app.auth.dependencies import get_current_user
+from app.models import Blog
 
-from app.jobs.schemas import (
-    JobCreate,
-    JobUpdate,
-    JobResponse
+from app.auth.dependencies import get_current_admin
+
+from app.blog.schemas import (
+    BlogCreate,
+    BlogUpdate,
+    BlogResponse
 )
 
-from app.jobs.service import (
-    create_job,
-    get_jobs,
-    get_job_by_id,
-    update_job,
-    delete_job
+from app.blog.service import (
+    create_blog,
+    get_all_blogs,
+    get_blog_by_id,
+    update_blog,
+    delete_blog
 )
 
 from app.utils.image_upload import upload_image
 
 
 router = APIRouter(
-    prefix="/jobs",
-    tags=["Jobs"]
+    prefix="/blogs",
+    tags=["Blog"]
 )
 
 
 # ==========================================
-# CREATE JOB
-# AUTHENTICATED USERS
+# CREATE BLOG
+# ADMIN ONLY
 # ==========================================
 
 @router.post(
     "",
-    response_model=JobResponse,
+    response_model=BlogResponse,
     status_code=status.HTTP_201_CREATED
 )
-def create_new_job(
+def create_new_blog(
     title: str = Form(...),
-    company: str = Form(...),
-    location: str = Form(...),
-    description: str = Form(...),
-    requirements: str = Form(...),
-    salary: str | None = Form(None),
-    job_type: str = Form(...),
-    is_active: bool = Form(True),
+    content: str = Form(...),
+    published: bool = Form(True),
     image: UploadFile | None = File(None),
 
     db: Session = Depends(get_db),
 
-    current_user=Depends(get_current_user)
+    current_admin=Depends(get_current_admin)
 ):
 
     image_url = None
@@ -75,151 +72,151 @@ def create_new_job(
 
         except Exception:
             raise HTTPException(
-                status_code=400,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Image upload failed"
             )
 
-    job_data = JobCreate(
+    blog_data = BlogCreate(
         title=title,
-        company=company,
-        location=location,
-        description=description,
-        requirements=requirements,
-        salary=salary,
-        job_type=job_type,
-        is_active=is_active
+        content=content,
+        published=published
     )
 
-    return create_job(
+    return create_blog(
         db=db,
-        job_data=job_data,
-        author_id=current_user.id,
+        blog_data=blog_data,
+        admin_id=current_admin.id,
         image_url=image_url
     )
 
 
 # ==========================================
-# GET ALL JOBS
+# GET ALL BLOGS
 # PUBLIC
 # ==========================================
 
 @router.get(
     "",
-    response_model=list[JobResponse]
+    response_model=list[BlogResponse]
 )
-def get_all_jobs(
+def get_blogs(
     db: Session = Depends(get_db)
 ):
-    return get_jobs(db)
+    return get_all_blogs(db)
 
 
 # ==========================================
-# GET ONE JOB
+# GET ONE BLOG
 # PUBLIC
 # ==========================================
 
 @router.get(
-    "/{job_id}",
-    response_model=JobResponse
+    "/{blog_id}",
+    response_model=BlogResponse
 )
-def get_single_job(
-    job_id: int,
+def get_single_blog(
+    blog_id: int,
     db: Session = Depends(get_db)
 ):
-    job = get_job_by_id(
+
+    blog = get_blog_by_id(
         db,
-        job_id
+        blog_id
     )
 
-    if not job:
+    if not blog:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Job not found"
+            detail="Blog not found"
         )
 
-    return job
+    return blog
 
 
 # ==========================================
-# UPDATE JOB
-# AUTHENTICATED USERS
+# UPDATE BLOG
+# ADMIN ONLY
 # ==========================================
 
 @router.put(
-    "/{job_id}",
-    response_model=JobResponse
+    "/{blog_id}",
+    response_model=BlogResponse
 )
-def update_existing_job(
-    job_id: int,
+def update_existing_blog(
+    blog_id: int,
 
-    job_data: JobUpdate,
+    blog_data: BlogUpdate,
 
     db: Session = Depends(get_db),
 
-    current_user=Depends(get_current_user)
+    current_admin=Depends(get_current_admin)
 ):
 
-    job = get_job_by_id(
+    blog = get_blog_by_id(
         db,
-        job_id
+        blog_id
     )
 
-    if not job:
+    if not blog:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Job not found"
+            detail="Blog not found"
         )
 
-    if not current_user.is_admin and job.author_id != current_user.id:
+    # Only the admin who owns the blog
+    # can update it.
+    if blog.admin_id != current_admin.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You are not allowed to edit this job"
+            detail="You are not allowed to edit this blog"
         )
 
-    return update_job(
+    return update_blog(
         db,
-        job,
-        job_data
+        blog,
+        blog_data
     )
 
 
 # ==========================================
-# DELETE JOB
-# AUTHENTICATED USERS
+# DELETE BLOG
+# ADMIN ONLY
 # ==========================================
 
 @router.delete(
-    "/{job_id}",
+    "/{blog_id}",
     status_code=status.HTTP_204_NO_CONTENT
 )
-def delete_existing_job(
-    job_id: int,
+def delete_existing_blog(
+    blog_id: int,
 
     db: Session = Depends(get_db),
 
-    current_user=Depends(get_current_user)
+    current_admin=Depends(get_current_admin)
 ):
 
-    job = get_job_by_id(
+    blog = get_blog_by_id(
         db,
-        job_id
+        blog_id
     )
 
-    if not job:
+    if not blog:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Job not found"
+            detail="Blog not found"
         )
 
-    if not current_user.is_admin and job.author_id != current_user.id:
+    # Only the admin who owns the blog
+    # can delete it.
+    if blog.admin_id != current_admin.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You are not allowed to delete this job"
+            detail="You are not allowed to delete this blog"
         )
 
-    delete_job(
+    delete_blog(
         db,
-        job
+        blog
     )
 
     return None

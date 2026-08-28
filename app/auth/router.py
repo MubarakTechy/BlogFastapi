@@ -56,20 +56,3 @@ def admin_login(
 
 
 
-
-# 4. Building a Strong Online Presence
-
-# Title: Simple Ways to Build a Strong Online Presence
-
-# Content:
-# Building an online presence starts with having clear information about your business. A professional website, active social media profiles, useful content, and easy communication channels can help customers find and trust your business.
-
-# 5. The Importance of Customer Experience
-
-# Title: Why Customer Experience Matters
-
-# Content:
-# Customers remember how a business makes them feel. Providing quick responses, clear information, reliable services, and an easy purchasing process can improve customer satisfaction and encourage people to return.
-
-# If you're testing your FastAPI blog endpoint, I can also give you 
-# 10 posts in the exact JSON format for your /blogs POST request, including title, content, image_url, and any other fields your schema requires.
