@@ -7,8 +7,6 @@ import cloudinary.uploader
 def upload_image(file):
 
     image = Image.open(file)
-
-    # Make sure it is actually an image
     image.verify()
 
     file.seek(0)
