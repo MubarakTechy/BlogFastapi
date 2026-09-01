@@ -244,69 +244,56 @@ class Admin(Base):
 
 
 
+# ==========================================
+# COURSE REGISTRATION
+# ==========================================
 
+class CourseRegistration(Base):
+    __tablename__ = "course_registrations"
 
+    id: Mapped[int] = mapped_column(
+        primary_key=True,
+        index=True
+    )
 
+    full_name: Mapped[str] = mapped_column(
+        String(150),
+        nullable=False
+    )
 
+    email: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+        index=True
+    )
 
+    course: Mapped[str] = mapped_column(
+        String(200),
+        nullable=False
+    )
 
-    
+    city: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False
+    )
 
-    
+    state: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False
+    )
 
-#     id: Mapped[int] = mapped_column(
-#         primary_key=True,
-#         index=True
-#     )
+    other: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True
+    )
 
-#     full_name: Mapped[str] = mapped_column(
-#         String(100),
-#         nullable=False
-#     )
+    reason: Mapped[str] = mapped_column(
+        Text,
+        nullable=False
+    )
 
-#     email: Mapped[str] = mapped_column(
-#         String(255),
-#         nullable=False,
-#         index=True
-#     )
-
-#     message: Mapped[str] = mapped_column(
-#         Text,
-#         nullable=False
-#     )
-
-#     created_at: Mapped[datetime] = mapped_column(
-#         DateTime,
-#         default=datetime.utcnow,
-#         nullable=False
-#     )
-
-
-# # ==========================================
-# # ADMIN
-# # ==========================================
-
-# class Admin(Base):
-#     __tablename__ = "admins"
-
-#     id: Mapped[int] = mapped_column(
-#         primary_key=True,
-#         index=True
-#     )
-
-#     email: Mapped[str] = mapped_column(
-#         String,
-#         unique=True,
-#         index=True,
-#         nullable=False
-#     )
-
-#     hashed_password: Mapped[str] = mapped_column(
-#         String,
-#         nullable=False
-#     )
-
-#     blogs: Mapped[list["Blog"]] = relationship(
-#         "Blog",
-#         back_populates="admin"
-#     )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False
+    )
