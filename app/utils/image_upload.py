@@ -5,7 +5,6 @@ import cloudinary.uploader
 
 
 def upload_image(file):
-
     image = Image.open(file)
     image.verify()
 

@@ -6,6 +6,7 @@ from app.blog.router import router as blog_router
 from app.jobs.router import router as jobs_router
 from app.contact.router import router as contact_router
 from app.course_registration.router import router as course_registration_router
+from app.job_applications.router import router as job_application_router
 
 
 app = FastAPI()
@@ -31,5 +32,6 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(blog_router)
 app.include_router(jobs_router)
+app.include_router(job_application_router)
 app.include_router(contact_router)
 app.include_router(course_registration_router)

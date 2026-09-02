@@ -176,6 +176,12 @@ class Job(Base):
     )
 
     author: Mapped["User"] = relationship()
+    
+    applications: Mapped[list["JobApplication"]] = relationship(
+    "JobApplication",
+    back_populates="job",
+    cascade="all, delete-orphan"
+)
 
 
 # ==========================================
@@ -296,4 +302,56 @@ class CourseRegistration(Base):
         DateTime,
         default=datetime.utcnow,
         nullable=False
+    )
+
+
+# ==========================================
+# JOB APPLICATION
+# ==========================================
+
+class JobApplication(Base):
+    __tablename__ = "job_applications"
+
+    id: Mapped[int] = mapped_column(
+        primary_key=True,
+        index=True
+    )
+
+    job_id: Mapped[int] = mapped_column(
+        ForeignKey("jobs.id"),
+        nullable=False,
+        index=True
+    )
+
+    email: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+        index=True
+    )
+
+    cover_letter: Mapped[str] = mapped_column(
+        Text,
+        nullable=False
+    )
+
+    resume_url: Mapped[str] = mapped_column(
+        String(1000),
+        nullable=False
+    )
+
+    status: Mapped[str] = mapped_column(
+        String(50),
+        default="Pending",
+        nullable=False
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False
+    )
+
+    job: Mapped["Job"] = relationship(
+        "Job",
+        back_populates="applications"
     )
