@@ -13,8 +13,9 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 
 from app.auth.dependencies import get_current_admin
-
-from app.models import Job
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from app.utils.resume_upload import upload_resume
+from app.models import Job, Admin
 
 from app.job_applications.schemas import (
     JobApplicationResponse,
@@ -43,25 +44,59 @@ router = APIRouter(
 # APPLY FOR JOB
 # PUBLIC
 # ==========================================
-
 @router.post(
     "/{job_id}/apply",
     response_model=JobApplicationResponse,
-    status_code=status.HTTP_201_CREATED
+    status_code=201
 )
 def apply_for_job(
-
     job_id: int,
-
     email: str = Form(...),
-
     cover_letter: str = Form(...),
-
     resume: UploadFile = File(...),
-
     db: Session = Depends(get_db)
 ):
+    job = db.query(Job).filter(Job.id == job_id).first()
 
+    if not job:
+        raise HTTPException(
+            status_code=404,
+            detail="Job not found"
+        )
+
+    if not job.is_active:
+        raise HTTPException(
+            status_code=400,
+            detail="This job is no longer accepting applications"
+        )
+
+    try:
+        resume_url = upload_resume(
+            resume.file,
+            resume.filename
+        )
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
+
+    except Exception as e:
+        print("RESUME UPLOAD ERROR:", repr(e))
+
+        raise HTTPException(
+            status_code=500,
+            detail="Resume upload failed"
+        )
+
+    return create_application(
+        db=db,
+        job=job,
+        email=email,
+        cover_letter=cover_letter,
+        resume_url=resume_url
+    )
     # --------------------------------------
     # FIND JOB
     # --------------------------------------
@@ -132,56 +167,29 @@ def apply_for_job(
 # ADMIN ONLY
 # ==========================================
 
-@router.get(
-    "/applications",
-    response_model=list[JobApplicationResponse]
-)
+@router.get("/applications", response_model=list[JobApplicationResponse])
 def get_all_job_applications(
-
     db: Session = Depends(get_db),
-
-    current_admin=Depends(get_current_admin)
-
+    admin: Admin = Depends(get_current_admin)
 ):
-
     return get_all_applications(db)
 
 
-# ==========================================
-# GET APPLICATIONS FOR ONE JOB
-# ADMIN ONLY
-# ==========================================
-
-@router.get(
-    "/{job_id}/applications",
-    response_model=list[JobApplicationResponse]
-)
+@router.get("/{job_id}/applications", response_model=list[JobApplicationResponse])
 def get_job_applications(
-
     job_id: int,
-
     db: Session = Depends(get_db),
-
-    current_admin=Depends(get_current_admin)
-
+    admin: Admin = Depends(get_current_admin)
 ):
-
-    job = db.query(Job).filter(
-        Job.id == job_id
-    ).first()
+    job = db.query(Job).filter(Job.id == job_id).first()
 
     if not job:
-
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=404,
             detail="Job not found"
         )
 
-    return get_applications_for_job(
-        db,
-        job_id
-    )
-
+    return get_applications_for_job(db, job_id)
 
 # ==========================================
 # GET ONE APPLICATION
@@ -198,7 +206,7 @@ def get_single_application(
 
     db: Session = Depends(get_db),
 
-    current_admin=Depends(get_current_admin)
+    admin: Admin = Depends(get_current_admin)
 
 ):
 
